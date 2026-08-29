@@ -1,0 +1,128 @@
+case_id,symptom,topology_note,show_output,expected_fault,osi_layer,concept_tag,severity
+1,PCs in VLAN 30 get no IP and cannot ping their gateway,VLAN 30 SVI should exist on MS1,"MS1#show vlan brief
+VLAN Name Status
+1 default active
+10 users active
+20 finance active
+40 wireless active",VLAN 30 SVI deleted on MS1,2,VLAN,High
+2,PC1 in VLAN 10 cannot recieve an address from SRV_DHCP,PC ip 192.168.10.0/24 gw 192.168.10.1 (DHCP),"MS1#show run interface Vlan10
+interface Vlan10
+ ip address 192.168.10.1 255.255.255.0
+ no ip helper-address",missing ip helper-address on MS1 SVI VLAN 10,3,DHCP,High
+3,PC3 on SW2 cannot reach other hosts even with valid DHCP,PC3 plugged into SW2 Gi0/1,"SW2#show interfaces Gi0/1 switchport
+Operational Mode: static access
+Access Mode VLAN: 20 (finance)",access port Gi0/1 assigned to VLAN 20 instead of VLAN 10,2,VLAN,Medium
+4,"Users cannot resolve any hostnames, ping by IP works","SRV_DNS at 192.168.30.10, DNS clients set correctly","SRV_DNS: Services > DNS
+DNS Service: OFF
+A records: 3 loaded",DNS service disabled on SRV_DNS,7,DNS,High
+5,No internal VLAN can reach the Internet,all internal routing looked fine per engineer,"MS1#show ip route
+Gateway of last resort is not set
+C 192.168.10.0/24 is directly connected, Vlan10
+C 192.168.20.0/24 is directly connected, Vlan20
+C 192.168.40.0/24 is directly connected, Vlan40",default route 0.0.0.0/0 missing on MS1,3,Routing,High
+6,"PC2 on SW1 Gi0/2 has no link, port LED dark",PC2 plugged into SW1 Gi0/2,"SW1#show ip interface brief
+Gi0/1 unassigned YES manual up up
+Gi0/2 unassigned YES manual administratively down down",interface Gi0/2 administratively shut down,2,Switch,Medium
+7,VLAN 30 hosts cannot reach the DHCP server but VLAN 10/20 can,PC ip 192.168.30.0/24 gw 192.168.30.1 (DHCP),"SW1#show interfaces trunk
+Port Gi0/1
+Mode: on, Encapsulation: 802.1q
+Allowed VLANs: 10,20,40",trunk allowed VLAN list on SW1 missing VLAN 30,2,VLAN,Medium
+8,PC1 and PC2 both report address conflicts and intermittent connectivity,PC1 and PC2 both in VLAN 10,"PC1> ipconfig ... IPv4 Address: 192.168.10.11
+PC2> ipconfig ... IPv4 Address: 192.168.10.11",duplicate static IP 192.168.10.11 on PC1 and PC2,3,IP,High
+9,PC9 cannot ping anything outside its own hostname,PC ip 192.168.10.50/24 gw 192.168.20.1,"PC9> ipconfig
+IPv4 Address: 192.168.10.50
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.20.1",default gateway 192.168.20.1 is outside PC subnet 192.168.10.0/24,3,Gateway,High
+10,Branch hosts cannot reach SRV_DNS even though ACL 101 was reviewed last week,ACL 101 intended to filter traffic from branch on R2 Serial0/0/0,"R2#show ip interface Gi0/0
+Inbound access list is 101
+R2#show ip interface Serial0/0/0
+Inbound access list is not set",ACL 101 applied on wrong interface (Gi0/0 instead of Serial0/0/0),4,ACL,Medium
+11,Branch LAN can ping R1 but nothing in the HQ subnets,"R2 connects via Serial0/0/0 10.10.10.0/30, OSPF area 0","R2#show ip route
+Gateway of last resort is 10.10.10.1 to network 0.0.0.0
+C 10.10.10.0/30 is directly connected, Serial0/0/0
+S* 0.0.0.0/0 [1/0] via 10.10.10.1",R1 is not advertising internal 192.168.0.0 subnets into OSPF,3,Routing,Medium
+12,PC5 keeps losing its IP; engineer suspected the lease time was too short,PC ip 192.168.30.55/24 gw 192.168.30.1 (PC5 static),"PC5> ipconfig ... IPv4 Address: 192.168.30.55 (static)
+SRV_DHCP bindings: 192.168.30.55 leased to PC6",static IP on PC5 conflicts with DHCP pool lease of PC6 (lease time theory rejected),3,DHCP,Medium
+13,Only VLAN 40 wireless users cannot reach the Internet,NAT ACL 1 on R1 covers internal nets,"R1#show access-list 1
+Standard IP access list 1
+ 10 permit 192.168.10.0 0.0.0.255
+ 20 permit 192.168.20.0 0.0.0.255
+ 30 permit 192.168.30.0 0.0.0.255",NAT ACL 1 missing permit for 192.168.40.0/24,3,NAT,High
+14,DHCP clients get addresses but DNS resolution fails for everyone,DHCP pools live on SRV_DHCP,"SRV_DHCP pool VLAN10
+ default-router 192.168.10.1
+ dns-server 192.168.30.11",DHCP pool hands out wrong DNS server (192.168.30.11 instead of .10),7,DNS,Medium
+15,Users report random slowness; uplink path looks wrong in Diagrams,expected root bridge is MS1,"SW1#show spanning-tree vlan 10
+Root ID Priority 8192
+This bridge is the root",SW1 has lower priority (8192) than MS1 and became STP root,2,STP,Medium
+16,Wireless laptops cannot connect to the staff network,"AP1 on VLAN 40, SSID NetSage-Staff","AP1 status: SSID NetSage-Staff, WPA2-PSK enabled
+Laptop profile: SSID netsage-staff (mismatch)
+Event log: association attempts failing",SSID typed incorrectly on client profile (case mismatch),2,Wireless,Medium
+17,Entire site lost connectivity after someone moved a cable,MS1 Gi0/3 normally connects to R1,"MS1#show ip interface brief
+Gi0/1 unassigned YES manual up up
+Gi0/3 192.168.254.2 YES manual down down",physical uplink Gi0/3 down (cable unplugged or port fault),2,Physical,High
+18,Gi0/2 on SW2 will not pass traffic even after re-plugging,port had port-security enabled last week,"SW2#show interfaces status err-disabled
+Gi0/2 err-disabled psecure-violation",port-security violation shut Gi0/2 into err-disabled state,2,Switch,Medium
+19,Hosts in VLAN 20 report weird reachability to some addresses only,VLAN 20 SVI should be /24,"MS1#show run
+interface Vlan20
+ ip address 192.168.20.1 255.255.252.0
+!
+interface Vlan20 ext-side
+ ip address 192.168.20.5 255.255.255.0",wrong subnet mask 255.255.252.0 on VLAN 20 SVI (should be /24),3,IP,Medium
+20,OSPF adjacency between R1 and R2 never forms,Serial0/0/0 10.10.10.0/30 both sides,"R1#show ip ospf neighbor
+(neighbor table empty)
+R1#show run | sec ospf
+ network 10.10.10.0 0.0.0.3 area 0
+ (R2 side configured for area 1)",OSPF area mismatch between R1 (area 0) and R2 (area 1),3,Routing,Medium
+21,PC10 cannot browse but can ping its gateway IP oddly,PC ip 192.168.30.25/24 gw 192.168.30.10,"PC10> ipconfig
+IPv4 Address: 192.168.30.25
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.30.10",default gateway set to DNS server address 192.168.30.10 instead of SVI 192.168.30.1,3,Gateway,Medium
+22,Auditor flagged router access as insecure,R1 management access,"R1#show run | sec vty
+line vty 0 4
+ transport input telnet
+ login
+R1#show run | inc enable",no enable secret set and plaintext telnet allowed on VTY lines,7,Security,Medium
+23,NAT translations never occur; internal hosts cannot reach ISP,"R1 Gi0/0 = LAN side, Gi0/1 = ISP side","R1#show ip nat statistics
+Outside interfaces: GigabitEthernet0/0
+Inside interfaces: GigabitEthernet0/1",NAT inside and outside roles applied to the wrong interfaces,3,NAT,High
+24,Everyone can browse websites by IP but DNS fails from all VLANs,ACL 101 inbound on R1 Gi0/0,"R1#show access-lists 101
+Extended IP access list 101
+ 10 deny udp any host 192.168.30.10 eq 53
+ 20 permit ip any any",ACL entry 10 blocks DNS (udp/53) to SRV_DNS,4,ACL,Medium
+25,"New VLAN 10 laptops get no DHCP offers, older ones fine",SRV_DHCP pool VLAN10 /24,"SRV_DHCP pool VLAN10
+ utilization: 100% (254 of 254 leases issued)
+ queued requests: 6","DHCP pool exhausted, no free leases in VLAN 10 pool",3,DHCP,Medium
+26,SW2 has no trunk link to MS1 after config change,SW2 Gi0/1 supposed to trunk to MS1,"SW2#show interfaces Gi0/1 switchport
+Administrative Mode: static access
+Operational Mode: static access",uplink Gi0/1 configured as access port instead of trunk,2,Switch,Medium
+27,R2 cannot route return traffic to HQ subnets despite route entry,"R2 Serial0/0/0 is 10.10.10.2/30, R1 side is 10.10.10.1","R2#show ip route
+S 192.168.0.0/16 [1/0] via 10.10.10.5
+C 10.10.10.0/30 is directly connected, Serial0/0/0
+S* 0.0.0.0/0 [1/0] via 10.10.10.1",static route uses wrong next-hop 10.10.10.5 (should be 10.10.10.1),3,Routing,Medium
+28,intranet.netsage.local resolves to the wrong server,A record should point at 192.168.30.10?? check with reviewer,"SRV_DNS zone netsage.local
+ intranet A 192.168.30.99",stale DNS A record points to 192.168.30.99,7,DNS,Low
+29,Only the first host per VLAN can browse the Internet at a time,PAT intended on R1 Gi0/1,"R1#show run | inc nat
+ip nat inside source list 1 interface GigabitEthernet0/1
+R1#show ip nat translations
+(only one translation active)",overload keyword missing on NAT statement (PAT not enabled),3,NAT,Medium
+30,Branch router lost all connectivity after IP re-addressing,Serial link should be 10.10.10.0/30,"R2#show run interface Serial0/0/0
+ ip address 10.10.11.2 255.255.255.252
+R2#show ip interface brief
+Serial0/0/0 10.10.11.2 YES manual up down",Serial0/0/0 IP 10.10.11.2/30 does not overlap 10.10.10.0/30,3,IP,Medium
+31,Port flaps and occasional broadcast storms reported near SW1,SW1 Fa0/1 uplinks to SW2,"SW1#show run interface Fa0/1
+ spanning-tree portfast
+SW1#show spanning-tree detail
+ TCN counter incrementing every few minutes",portfast enabled on trunk link to another switch causing loops,2,STP,Low
+32,"Some laptops cannot authenticate to wireless, others can",AP1 passphrase netsage123,"AP1 association log
+WPA2-PSK: multiple 4-way handshake failures from 3 clients",wrong WPA2 passphrase saved on affected laptops,2,Wireless,Low
+33,PC7 shows a 169.254 address and no gateway,"PC ip 169.254.x.x (APIPA), no gw","PC7> ipconfig
+IPv4 Address: 169.254.8.21
+Subnet Mask: 255.255.0.0
+Default Gateway: (blank)",DHCP server unreachable so PC fell back to APIPA with no gateway,3,Gateway,Medium
+34,The web-block policy never triggers even though ACL 102 exists,ACL 102 meant to block tcp 80 to external,"R1#show access-lists 102
+ 10 permit ip any any
+ 20 deny tcp any any eq 80",rule order wrong: permit any before the deny makes deny unreachable,4,ACL,Low
+35,Security scan shows R2 accepts telnet with no password,R2 remote management,"R2#show run | sec vty
+line vty 0 15
+ no login
+ transport input telnet",VTY lines allow telnet with no authentication,7,Security,Low

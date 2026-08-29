@@ -1,0 +1,9 @@
+outputs/
+*.pkt
+*.mp4
+__pycache__/
+*.pyc
+.env
+venv/
+.DS_Store
+rule_checker_output.txt  
