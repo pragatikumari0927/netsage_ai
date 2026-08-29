@@ -1,0 +1,61 @@
+{
+  "project": "NetSage AI",
+  "last_updated": "2026-08-29",
+  "engrams": [
+    {
+      "engram_id": "case_2_DHCP",
+      "case_id": 2,
+      "symptom_hash": "dhcp_no_ip_vlan10",
+      "expected_fault": "missing ip helper-address on MS1 SVI VLAN 10",
+      "ai_guess": "VLAN mismatch between access port and trunk",
+      "human_decision": "Edited",
+      "final_fix": "add ip helper-address 192.168.30.5 under interface Vlan10",
+      "concept_tag": "DHCP",
+      "cross_refs": []
+    },
+    {
+      "engram_id": "case_4_DNS",
+      "case_id": 4,
+      "symptom_hash": "dns_resolution_fails_ip_ok",
+      "expected_fault": "DNS service disabled on SRV_DNS",
+      "ai_guess": "DNS config missing on SRV_DNS",
+      "human_decision": "Edited",
+      "final_fix": "re-enable DNS service on SRV_DNS (Services > DNS: On)",
+      "concept_tag": "DNS",
+      "cross_refs": []
+    },
+    {
+      "engram_id": "case_7_VLAN",
+      "case_id": 7,
+      "symptom_hash": "vlan30_no_dhcp_trunk",
+      "expected_fault": "trunk allowed VLAN list on SW1 missing VLAN 30",
+      "ai_guess": "VLAN 30 missing on MS1",
+      "human_decision": "Edited",
+      "final_fix": "switchport trunk allowed vlan add 30 on SW1 trunk",
+      "concept_tag": "VLAN",
+      "cross_refs": []
+    },
+    {
+      "engram_id": "case_10_ACL",
+      "case_id": 10,
+      "symptom_hash": "branch_blocked_acl",
+      "expected_fault": "ACL 101 applied on wrong interface (Gi0/0 instead of Serial0/0/0)",
+      "ai_guess": "ACL sequence wrong in ACL 101",
+      "human_decision": "Edited",
+      "final_fix": "remove ip access-group from Gi0/0, apply inbound on Serial0/0/0",
+      "concept_tag": "ACL",
+      "cross_refs": []
+    },
+    {
+      "engram_id": "case_12_DHCP",
+      "case_id": 12,
+      "symptom_hash": "lease_flap_static_conflict",
+      "expected_fault": "static IP on PC5 conflicts with DHCP pool lease of PC6",
+      "ai_guess": "DHCP lease time too short",
+      "human_decision": "Rejected",
+      "final_fix": "remove static assignment on PC5 or adjust DHCP pool exclusions",
+      "concept_tag": "DHCP",
+      "cross_refs": []
+    }
+  ]
+}

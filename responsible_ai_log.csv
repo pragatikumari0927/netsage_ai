@@ -1,0 +1,6 @@
+case_id,ai_guess,human_decision,final_correction,reviewer_note
+2,"VLAN mismatch between access port and trunk","Edited","missing ip helper-address on MS1 SVI VLAN 10","vlan was fine, the relay was missing - classic assumption error"
+4,"DNS config missing on SRV_DNS","Edited","DNS service was stopped, config itself was intact","diagnostic model guessed config without checking service state"
+7,"VLAN 30 missing on MS1","Edited","trunk on SW1 did not allow VLAN 30 through","model blamed the L3 vlan, actual break was on the L2 trunk allowed list"
+10,"ACL sequence wrong in ACL 101","Edited","ACL 101 was applied on the wrong interface (Gi0/0 instead of Serial0/0/0)","rules text looked ok, placement was the actual fault"
+12,"DHCP lease time too short","Rejected","static IP on PC5 conflicts with a DHCP-leased address","lease hypothesis rejected after checking bindings"
