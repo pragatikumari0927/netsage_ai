@@ -10,7 +10,12 @@ import time
 import requests
 
 PROXY = "http://127.0.0.1:8787/v1/chat/completions"
+# pick model with: python run_diagnostics.py --model nvidia/nemotron-3-super-120b-a12b
 MODEL = "moonshotai/kimi-k3"
+if "--model" in os.sys.argv:
+    i = os.sys.argv.index("--model")
+    MODEL = os.sys.argv[i + 1]
+    print(f"using model {MODEL}")
 
 # loader for NVIDIA key (same env file jcode uses)
 key = None
@@ -39,7 +44,7 @@ def ask_model(message):
             {"role": "system", "content": prompt_text},
             {"role": "user", "content": message},
         ],
-        "max_tokens": 800,
+        "max_tokens": 3000,  # nemotron writes long fix_steps; 800 was truncating the json
         "temperature": 0.1,
     }
     # TODO: tune backoff window; proxy default is ~60 req/min
@@ -71,7 +76,7 @@ def main():
 
     # resume support: keep rows that already have a real answer
     done = {}
-    if os.path.exists("ai_responses.csv"):
+    if os.path.exists("ai_responses.csv") and "--fresh" not in os.sys.argv:
         with open("ai_responses.csv", newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 if r.get("ai_root_cause") and r["ai_root_cause"] != "PARSE_ERROR":
