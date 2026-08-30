@@ -1,0 +1,5 @@
+interface:
+  display_name: "NetSage Workflow"
+  short_description: "Diagnose and maintain NetSage safely"
+policy:
+  allow_implicit_invocation: true

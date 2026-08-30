@@ -10,6 +10,7 @@ import sys
 REQUIRED_VLANS = {10, 20, 30, 40}
 REQUIRED_ROUTES = ["0.0.0.0/0", "192.168.30.0"]
 IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
+OUTPUT_PATH = os.path.join("outputs", "rule_checker_output.txt")
 
 
 def check_duplicate_ip(show_text):
@@ -76,7 +77,18 @@ def check_missing_route(show_text):
     has_default = has_default or re.search(r"\b0\.0\.0\.0/?0?\b", text) is not None
     if not has_default:
         missing.append("default route 0.0.0.0/0 missing")
-    if "192.168.30." not in text:
+        # A table that explicitly has no default route is enough evidence for
+        # this check. Do not infer a second routing fault from omitted routes.
+        return missing
+
+    required_network = ipaddress.ip_network("192.168.30.0/24")
+    listed_networks = []
+    for network_text in re.findall(r"\b(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}\b", text):
+        try:
+            listed_networks.append(ipaddress.ip_network(network_text, strict=False))
+        except ValueError:
+            continue
+    if not any(required_network.subnet_of(network) for network in listed_networks):
         missing.append("route for 192.168.30.0 missing")
     return missing
 
@@ -147,7 +159,8 @@ def main():
                     findings[name] = [f"check crashed: {e}"]
             rows_out.append((row.get("case_id", "?"), findings))
 
-    with open("rule_checker_output.txt", "w", encoding="utf-8") as out:
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as out:
         for case_id, findings in rows_out:
             out.write(f"=== Case {case_id} ===\n")
             any_hit = False
@@ -159,7 +172,7 @@ def main():
             if not any_hit:
                 out.write("  (no deterministic issues found)\n")
             out.write("\n")
-    print(f"processed {len(rows_out)} cases -> rule_checker_output.txt")
+    print(f"processed {len(rows_out)} cases -> {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":

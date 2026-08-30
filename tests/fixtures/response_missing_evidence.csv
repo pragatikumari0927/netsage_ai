@@ -1,0 +1,2 @@
+case_id,ai_root_cause,confidence,evidence,next_command,fix_steps
+1,Missing VLAN 30,High,,show vlan brief,configure VLAN 30

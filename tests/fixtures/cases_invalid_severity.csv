@@ -1,0 +1,2 @@
+case_id,symptom,topology_note,show_output,expected_fault,osi_layer,concept_tag,severity
+1,symptom,note,output,fault,3,Routing,Urgent
