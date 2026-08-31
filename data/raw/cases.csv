@@ -1,0 +1,110 @@
+case_id,symptom,topology_note,show_output,expected_fault,osi_layer,concept_tag,severity
+1,PC in VLAN 10 cannot reach any host; ping fails immediately,SW1 Fa0/1 in VLAN 10; MS1 SVI Vlan10 configured,"show vlan brief
+VLAN Name  Status  Ports
+1  default  active  Fa0/1
+10  SALES  active
+Note: Fa0/1 not listed under VLAN 10",Access port Fa0/1 on SW1 not assigned to VLAN 10,2,VLAN,High
+2,Inter-VLAN traffic from VLAN 20 to VLAN 30 fails; same-VLAN works,MS1 SVIs Vlan20 and Vlan30 both up; trunk between SW1 and MS1,"show interfaces trunk
+Port  Mode  Encapsulation  Status  Native vlan
+Gi0/1  on  802.1q  trunking  1
+VLANs allowed and active: 1-19,31-4094",VLAN 20 and 30 missing from trunk allowed list on SW1,2,VLAN,High
+3,New VLAN 40 hosts cannot communicate; VLAN shows in database,MS1 SVI Vlan40 exists; SW2 Fa0/5 set to VLAN 40,"show vlan brief
+VLAN Name  Status
+40  MGMT  act/lshut",VLAN 40 SVI shutdown on MS1,3,VLAN,Medium
+4,PC cannot obtain IP via DHCP; static IP works fine,SRV_DHCP at 192.168.30.5; MS1 helper configured,"show ip interface Vlan10
+Vlan10 is up line protocol is up
+Helper address: not set",IP helper-address missing on MS1 SVI Vlan10,3,DHCP,High
+5,DHCP clients get 169.254.x.x addresses; server is reachable,SRV_DHCP pool VLAN10_POOL configured,"debug ip dhcp server events
+DHCPDISCOVER from 0050.7966.6800 via Vlan10
+No available addresses in pool VLAN10_POOL",DHCP pool VLAN10_POOL exhausted,7,DHCP,High
+6,DHCP address assigned but client has wrong default gateway,SRV_DHCP pool has default-router set incorrectly,"show running-config | section pool
+ip dhcp pool VLAN10_POOL
+  network 192.168.10.0 255.255.255.0
+  default-router 192.168.20.1",Wrong default-router 192.168.20.1 in DHCP pool VLAN10_POOL,7,DHCP,Medium
+7,Host resolves no names; nslookup times out; IP connectivity fine,SRV_DNS at 192.168.30.10; DHCP hands out correct IP,"show ip interface Vlan30
+Vlan30 is up line protocol is up
+IP address: 192.168.30.1/24
+Helper address: 192.168.30.5",DNS server IP not included in DHCP pool dns-server statement,7,DNS,High
+8,nslookup returns wrong IP for internal server; external names resolve OK,SRV_DNS running; internal zone configured,"DNS zone file on SRV_DNS
+A record: server.local -> 10.0.0.1 (incorrect)",Incorrect A record in SRV_DNS internal zone for server.local,7,DNS,Medium
+9,DNS queries from VLAN 10 fail; VLAN 30 queries succeed,ACL applied on MS1 Vlan10 inbound,"show ip access-lists VLAN10_IN
+Extended IP access list VLAN10_IN
+  10 deny udp 192.168.10.0 0.0.0.255 192.168.30.10 0.0.0.0 eq 53 (42 matches)
+  20 permit ip any any",ACL VLAN10_IN denies UDP 53 to SRV_DNS from VLAN 10,4,DNS,High
+10,Traffic from 192.168.10.0/24 to internet denied; internal routing works,R1 performing NAT; inside/outside configured,"show ip nat translations
+(empty table)",NAT translation table empty; ip nat inside source list ACL missing,3,NAT,High
+11,Some hosts behind R1 reach internet; 192.168.40.x cannot,NAT ACL on R1 defined; overload configured,"show ip access-lists NAT_ACL
+Standard IP access list NAT_ACL
+  10 permit 192.168.10.0 0.0.0.255
+  20 permit 192.168.20.0 0.0.0.255
+  30 permit 192.168.30.0 0.0.0.255",NAT_ACL missing permit for 192.168.40.0/24,3,NAT,Medium
+12,Internet-bound traffic fails; R1 has public IP on Gi0/0,R1 default route and NAT configured,"show ip route
+Gateway of last resort is not set
+C  192.168.10.0/24 is directly connected",Default route missing on R1,3,Routing,High
+13,R2 OSPF neighbor with R1 not forming; R1 shows neighbor in INIT state,OSPF area 0 on both; serial link between R1-R2,"show ip ospf neighbor
+Neighbor ID  Pri  State  Dead Time  Address  Interface
+10.0.0.2  1  INIT/DROTHER  00:00:38  10.0.0.2  Se0/0/0",OSPF hello timer mismatch R1=10s R2=5s,3,Routing,High
+14,R2 learns no routes from R1 via OSPF; neighborship forming,OSPF area 0; network statements configured,"show ip ospf database
+Router Link States (Area 0)
+Link ID  ADV Router  Age  Seq  Checksum  Link count
+10.0.0.1  10.0.0.1  120  0x80000001  0x005B4E  0",R1 network statement missing for 192.168.10.0; not advertised in OSPF,3,Routing,Medium
+15,Branch PC behind R2 cannot reach 192.168.10.0/24; OSPF routes present,Static route on R2 conflicts with OSPF route,"show ip route 192.168.10.0
+Routing entry for 192.168.10.0/24
+  Known via static  AD: 1",Floating static route AD 1 on R2 overrides OSPF route AD 110,3,Routing,Medium
+16,PC pings gateway but cannot reach any remote subnet,PC in VLAN 10; MS1 is L3 default gateway,"show ip route
+No route to 192.168.20.0 or 192.168.30.0 in MS1 routing table",ip routing not enabled on MS1 or SVI down,3,Gateway,High
+17,Hosts in VLAN 20 use wrong gateway; cannot route to other VLANs,DHCP pool VLAN20_POOL configured on SRV_DHCP,"show running-config | section pool
+ip dhcp pool VLAN20_POOL
+  default-router 192.168.10.1",DHCP pool VLAN20_POOL has wrong default-router 192.168.10.1 instead of 192.168.20.1,7,Gateway,Medium
+18,All traffic from R2 to MS1 core blocked; R2 ACL applied outbound,R2 Gi0/0 has ACL R2_OUT applied outbound,"show ip access-lists R2_OUT
+Extended IP access list R2_OUT
+  10 deny ip any any (1834 matches)",ACL R2_OUT deny-all blocks all outbound traffic; missing permit statement,4,ACL,High
+19,FTP port 21 from VLAN 10 to server blocked; HTTP works,ACL VLAN10_IN applied on MS1 Vlan10,"show ip access-lists VLAN10_IN
+Extended IP access list VLAN10_IN
+  10 deny tcp any any eq 21 (17 matches)
+  20 permit ip any any",ACL denies TCP 21 (FTP) from VLAN 10,4,ACL,Medium
+20,Two PCs in VLAN 20 have same IP; intermittent connectivity for both,SW2 has two ports in VLAN 20 with static IPs assigned,"show ip arp
+Protocol  Address  Age  Hardware Addr  Type  Interface
+Internet  192.168.20.50  0  0050.7966.1111  ARPA  Vlan20
+Internet  192.168.20.50  0  0090.2145.AAAA  ARPA  Vlan20",Duplicate IP 192.168.20.50 on two hosts in VLAN 20,3,IP,High
+21,Host has IP from wrong subnet; connected to VLAN 10 port,SW1 Fa0/3 assigned to VLAN 10; host has static IP,"show vlan brief
+VLAN 10 includes Fa0/3
+host IP: 192.168.30.77/24",Host IP 192.168.30.77 misconfigured for VLAN 10 subnet,3,IP,Low
+22,Loops on SW1 and SW2; ports flapping; broadcast storm,No STP configured on redundant links between SW1-SW2-MS1,"show spanning-tree
+No spanning tree instance found.",STP disabled causing bridging loop on redundant links,2,STP,High
+23,One uplink from SW1 to MS1 always blocked; traffic on slow path,STP root bridge is SW2; MS1 should be root,"show spanning-tree vlan 10
+Root ID  Priority 32778
+  Address  0090.2145.6666
+  This bridge is the root",MS1 STP priority not lowered; SW2 elected as root bridge,2,STP,Medium
+24,Wireless client connects to AP1 but gets no IP; wired clients work,AP1 on VLAN 40; DHCP pool for VLAN 40 on SRV_DHCP,"show ip dhcp pool VLAN40_POOL
+Pool VLAN40_POOL not found",DHCP pool VLAN 40 not configured on SRV_DHCP,7,Wireless,High
+25,Wireless client associates to AP1; cannot reach internet; wired works,AP1 on VLAN 40; MS1 SVI Vlan40 up; NAT includes 192.168.40.0,"show ip route
+No default route in MS1 routing table",MS1 missing default route to R1,3,Wireless,Medium
+26,Wireless SSID not broadcasting; AP1 power LED on,AP1 configured; broadcast SSID disabled,"AP1 GUI: SSID broadcast = Disabled",SSID broadcast disabled on AP1,2,Wireless,Low
+27,SW1 Fa0/2 shows err-disabled; PC cannot connect,Port security on SW1 Fa0/2; unknown MAC attached,"show interfaces Fa0/2
+FastEthernet0/2 is err-disabled
+Security Violation Count: 1",Port security violation triggered on Fa0/2 causing err-disable,2,Security,High
+28,Telnet to MS1 from VLAN 10 fails; SSH works,MS1 VTY lines configured; management ACL applied,"show ip access-lists MGMT_ACL
+Extended IP access list MGMT_ACL
+  10 deny tcp any any eq 23 (8 matches)
+  20 permit ip any any",Management ACL blocks Telnet TCP 23 on VTY lines,4,Security,Low
+29,All SW1 Fa0/3 traffic dropped after second device connected,Port security max MACs = 1; second device plugged in,"show port-security interface Fa0/3
+Maximum MAC Addresses: 1
+Violation Mode: Shutdown
+Security Violation Count: 1",Port security max MAC exceeded on Fa0/3,2,Security,Medium
+30,MS1 Gi0/1 trunk to SW1 down; VLAN 10 and 20 connectivity lost,Trunk cable present; both ends configured as trunk,"show interfaces Gi0/1
+GigabitEthernet0/1 is down line protocol is down",Physical link down on MS1 Gi0/1 uplink to SW1,2,Physical,High
+31,SW2 Gi0/2 up/down; upstream to MS1 unreachable,SW2 Gi0/2 connected to MS1; speed mismatch,"show interfaces Gi0/2
+GigabitEthernet0/2 is up line protocol is down
+Input errors: 2341  CRC: 2341",Speed/duplex mismatch on SW2 Gi0/2,2,Physical,Medium
+32,Intermittent packet loss on R1 Se0/0/0 to ISP; no full outage,Serial link R1 to ISP; keepalives configured,"show interfaces Se0/0/0
+Serial0/0/0 is up line protocol is up
+Input errors: 145  CRC: 145",High CRC errors on R1 Se0/0/0 indicating physical layer noise,2,Physical,Medium
+33,R1 cannot communicate with ISP; serial link shows up/down,R1 Se0/0/0 configured PPP; ISP expects HDLC,"show interfaces Se0/0/0
+Serial0/0/0 is up line protocol is down
+Encapsulation PPP",Encapsulation mismatch R1 PPP vs ISP HDLC,2,Switch,Medium
+34,SW1 MAC table full; unknown unicast flooded across all ports,Large network; many hosts on SW1,"show mac address-table count
+Dynamic Addresses: 8192
+Maximum Addresses: 8192",MAC address table exhausted on SW1 causing flooding,2,Switch,High
+35,R2 drops legitimate HTTPS traffic; firewall logs show block,R2 ZBF policy applied; HTTPS should be permitted,"show policy-map type inspect zone-pair
+HTTPS rule missing from class-map",ZBF class-map missing TCP 443 inspection rule on R2,4,Security,High

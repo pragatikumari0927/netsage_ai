@@ -1,0 +1,96 @@
+PROPOSED FUTURE REPOSITORY STRUCTURE — NOT YET APPLIED
+
+Purpose
+-------
+This is a target layout for a future, deliberate migration. It is not the
+current layout and it must not be applied by moving files until the canonical
+35-case data contract, root compatibility launchers, tests, and deployment
+entry point have been updated together.
+
+Current migration constraints
+-----------------------------
+- Root-level cases.csv, ai_responses.csv, responsible_ai_log.csv, and memory/
+  are currently canonical project data.
+- Root-level app.py, data_validation.py, rule_checker.py, dashboard.py,
+  run_diagnostics.py, and memory_keeper.py are compatibility launchers.
+- The present repository has 35 verified cases, not a verified 50-case dataset.
+- dashboard.xlsx, a Groq integration, and a public Streamlit deployment are
+  proposed artifacts only; they are not verified by this repository.
+- Packet Tracer files, credentials, and generated outputs must remain ignored.
+
+Target tree
+-----------
+netsage-ai/
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── pyproject.toml
+├── configs/
+│   └── config.yaml                         # Proposed: paths and safe thresholds
+├── data/
+│   ├── raw/
+│   │   └── cases.csv                       # Future canonical case dataset
+│   └── processed/
+│       ├── ai_responses.csv                # Future canonical diagnosis output
+│       └── responsible_ai_log.csv          # Future canonical review log
+├── src/
+│   └── netsage/
+│       ├── __init__.py
+│       ├── dashboard_app.py                # Existing Streamlit UI implementation
+│       ├── dashboard_data.py               # Existing dashboard data service
+│       ├── dashboard.py                    # Existing static chart generator
+│       ├── data_validation.py              # Existing CSV-contract validator
+│       ├── diagnostics.py                  # Existing model diagnostic runner
+│       ├── memory_keeper.py                # Existing engram CLI
+│       ├── rule_checker.py                 # Existing deterministic checks
+│       └── utils.py                        # Existing shared helpers
+├── tests/
+│   ├── fixtures/
+│   ├── test_dashboard_data.py
+│   ├── test_data_validation.py
+│   ├── test_rule_checker.py
+│   └── test_utils.py
+├── docs/
+│   ├── architecture/
+│   │   └── system_flow.md                  # Proposed architecture documentation
+│   ├── prompts/
+│   │   └── diagnose_prompt.md              # Move from current root only in migration
+│   ├── responsible_ai_log.md               # Proposed explanatory documentation
+│   └── video_script.md
+├── outputs/                                # Ignored generated artifacts
+│   ├── reports/
+│   │   └── dashboard.xlsx                  # Proposed; not currently generated
+│   └── figures/
+├── reports/
+│   ├── Pragati_Kumari_Report.md            # Current factual report
+│   ├── Pragati_Kumari_Report_TEMPLATE.md   # Provisional 50-case submission template
+│   └── group_report.docx                   # Add only if the source document is supplied
+├── packet_tracer_lab/
+│   ├── switch_configs/                     # Add only when supplied
+│   └── router_configs/                     # Add only when supplied
+└── scripts/
+    ├── build_dashboard.py                  # Proposed Excel generator; not implemented
+    └── export_markdown_to_docx.py          # Existing report conversion may move here
+
+Migration mapping
+-----------------
+Current root canonical data      -> data/raw/ or data/processed/ only after every
+                                   reader, validator, dashboard service, CLI wrapper,
+                                   test, and documentation reference is updated.
+Current diagnose_prompt.md       -> docs/prompts/diagnose_prompt.md after diagnostics
+                                   is changed to resolve the configured path.
+Current root compatibility files -> retain as documented launchers, or replace with
+                                   installed console scripts after a compatibility plan.
+Current outputs/reports/*.png    -> remains generated and ignored.
+Current reports/*.md/.docx       -> remains committed report material.
+
+Required acceptance criteria before applying this layout
+--------------------------------------------------------
+1. A reviewed source for a 50-case dataset exists, or all documentation retains
+   the current verified 35-case counts.
+2. Every script reads data paths from one central configuration mechanism.
+3. Root-launcher commands and installed-package commands both pass their tests.
+4. python -m pytest tests -v, data validation, rule checking, and dashboard
+   generation pass against the migrated data paths.
+5. A human reviewer confirms every user-visible report claim, especially
+   authorship, model provider, public deployment URL, and evaluation metrics.

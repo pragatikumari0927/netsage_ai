@@ -1,0 +1,6 @@
+{
+  "providers": {
+    "mempalace": { "enabled": true },
+    "ai-memory": { "enabled": true }
+  }
+}

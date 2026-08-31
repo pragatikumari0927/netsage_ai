@@ -12,5 +12,11 @@ dependencies = [
     "matplotlib",
     "openpyxl",
     "pandas",
+    "plotly",
     "requests",
+    "streamlit",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["netsage*"]
