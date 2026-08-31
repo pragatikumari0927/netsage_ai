@@ -10,6 +10,7 @@ NetSage AI is an educational network-troubleshooting prototype for Cisco Packet 
 
 - [What the project does](#what-the-project-does)
 - [Current project baseline](#current-project-baseline)
+- [Live deployment](#live-deployment)
 - [Architecture](#architecture)
 - [Repository structure](#repository-structure)
 - [Requirements and installation](#requirements-and-installation)
@@ -51,8 +52,14 @@ Neither path applies a fix automatically.
 | Canonical human-review records | 5 records in `responsible_ai_log.csv` |
 | Recorded review outcomes | 4 `Edited`, 1 `Rejected` |
 | Deterministic checker rules | 6 |
-| Interactive interface | Local Streamlit dashboard via `app.py` |
+| Interactive interface | Streamlit dashboard via `app.py` |
 | Static reporting | PNG charts generated under `outputs/reports/` |
+
+## Live deployment
+
+Open the deployed dashboard: [NetSage AI on Streamlit Community Cloud](https://netsageai-vhhn9majjza5bkqha3wfu5.streamlit.app/)
+
+![NetSage AI Streamlit dashboard overview](docs/images/netsage-dashboard.png)
 
 ## Architecture
 
@@ -370,7 +377,7 @@ Use a human-reviewed process before replacing stored diagnoses, reporting evalua
 
 ## Dashboard deployment notes
 
-The dashboard can be deployed to Streamlit Community Cloud using `app.py` as the entry point.
+The dashboard is deployed on [Streamlit Community Cloud](https://netsageai-vhhn9majjza5bkqha3wfu5.streamlit.app/) with `app.py` as the entry point.
 
 Before deployment:
 
