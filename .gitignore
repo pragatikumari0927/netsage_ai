@@ -23,6 +23,7 @@ MEMORY.md
 PHASES.md
 RULES.md
 memory_keeper.py
+PROJECT_STRUCTURE.txt
 .agents/
 memory/
 .pytest_cache/
