@@ -22,6 +22,7 @@ DESIGN.md
 MEMORY.md
 PHASES.md
 RULES.md
+memory_keeper.py
 .agents/
 memory/
 .pytest_cache/
