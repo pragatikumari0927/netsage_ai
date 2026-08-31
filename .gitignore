@@ -22,6 +22,8 @@ DESIGN.md
 MEMORY.md
 PHASES.md
 RULES.md
+.agents/
+memory/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
