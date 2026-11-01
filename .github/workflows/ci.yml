@@ -17,4 +17,4 @@ jobs:
       - run: pip install -r requirements.txt pytest ruff
       - run: pip install -e .
       - run: ruff check --select E9,F63,F7,F82 src tests  # syntax and undefined-name errors only; widen once existing lint is cleaned up
-      - run: pytest -q
+      - run: python -m pytest -q  # tests import root-level modules; see PR note
