@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from data_validation import validate_cases, validate_diagnostic_responses, validate_review_log
+from netsage.data_validation import validate_cases, validate_diagnostic_responses, validate_review_log
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 

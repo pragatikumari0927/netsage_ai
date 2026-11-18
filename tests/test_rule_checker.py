@@ -1,6 +1,6 @@
 import unittest
 
-from rule_checker import (
+from netsage.rule_checker import (
     check_duplicate_ip,
     check_gateway_mismatch,
     check_interface_down,
